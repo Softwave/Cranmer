@@ -6,7 +6,7 @@
     "nodeVersion": "16.17.0",
     "main": "bot.js",
     "scripts": {
-        "start": "node bot.js"
+        "start": "node ./bot.js"
     },
     "name": "Cranmer",
     "version": "1.0",
