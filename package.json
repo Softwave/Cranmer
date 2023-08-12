@@ -1,1 +1,12 @@
-{}
+{
+    "dependencies": {
+        "discord.js": "^14.12.1",
+        "dotenv": "^16.3.1"
+    },
+    "nodeVersion": "16.17.0",
+    "main": "bot.js",
+    "name": "Cranmer",
+    "version": "1.0",
+    "description": "Cranmer is a Discord bot for querying the Anglican 39 Articles. ^_^",
+    "author": "Serene Leyba"
+}
