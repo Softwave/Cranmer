@@ -5,6 +5,9 @@
     },
     "nodeVersion": "16.17.0",
     "main": "bot.js",
+    "scripts": {
+        "start": "node bot.js"
+    },
     "name": "Cranmer",
     "version": "1.0",
     "description": "Cranmer is a Discord bot for querying the Anglican 39 Articles. ^_^",
