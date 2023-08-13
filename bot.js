@@ -4,7 +4,7 @@
 // (c) 2023 by Serene Leyba https://twitter.com/serene1662
 
 require('dotenv').config();
-const { Client, GatewayIntentBits, EmbedBuilder  } = require('discord.js');
+const { Client, Events, GatewayIntentBits, EmbedBuilder, REST, Routes, SlashCommandBuilder  } = require('discord.js');
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -12,12 +12,13 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
     ]
 });
+
 const articles = {
     'I': "Of Faith in the Holy Trinity.\r\nThere is but one living and true God, everlasting, without body, parts, or passions; of infinite power, wisdom, and goodness; the Maker, and Preserver of all things both visible and invisible. And in unity of this Godhead there be three Persons, of one substance, power, and eternity; the Father, the Son, and the Holy Ghost.",
     'II': "Of the Word or Son of God, which was made very Man.\r\nThe Son, which is the Word of the Father, begotten from everlasting of the Father, the very and eternal God, and of one substance with the Father, took Man's nature in the womb of the blessed Virgin, of her substance: so that two whole and perfect Natures, that is to say, the Godhead and Manhood, were joined together in one Person, never to be divided, whereof is one Christ, very God, and very Man; who truly suffered, was crucified, dead, and buried, to reconcile his Father to us, and to be a sacrifice, not only for original guilt, but also for actual sins of men",
     'III': "Of the going down of Christ into Hell.\r\nAs Christ died for us, and was buried, so also is it to be believed, that he went down into Hell.",
     'IV': "Of the Resurrection of Christ.\r\nChrist did truly rise again from death, and took again his body, with flesh, bones, and all things appertaining to the perfection of Man's nature; wherewith he ascended into Heaven, and there sitteth, until he return to judge all Men at the last day.",
-    'V': "Of the Resurrection of Christ.\r\nChrist did truly rise again from death, and took again his body, with flesh, bones, and all things appertaining to the perfection of Man's nature; wherewith he ascended into Heaven, and there sitteth, until he return to judge all Men at the last day.",
+    'V': "Of the Holy Ghost.\nThe Holy Ghost, proceeding from the Father and the Son, is of one substance, majesty, and glory, with the Father and the Son, very and eternal God.",
     'VI': "Of the Sufficiency of the Holy Scriptures for Salvation.\r\nHoly Scripture containeth all things necessary to salvation: so that whatsoever is not read therein, nor may be proved thereby, is not to be required of any man, that it should be believed as an article of the Faith, or be thought requisite or necessary to salvation. In the name of the Holy Scripture we do understand those canonical Books of the Old and New Testament, of whose authority was never any doubt in the Church.\r\n\r\nOf the Names and Number of the Canonical Books.\r\nGenesis, The First Book of Samuel, The Book of Esther,\r\nExodus, The Second Book of Samuel, The Book of Job,\r\nLeviticus, The First Book of Kings, The Psalms,\r\nNumbers, The Second Book of Kings, The Proverbs,\r\nDeuteronomy, The First Book of Chronicles, Ecclesiastes or Preacher,\r\nJoshua, The Second Book of Chronicles, Cantica, or Songs of Solomon,\r\nJudges, The First Book of Esdras, Four Prophets the greater,\r\nRuth, The Second Book of Esdras, Twelve Prophets the less.\r\n\r\nAnd the other Books (as Hierome saith) the Church doth read for example of life and instruction of manners; but yet doth it not apply them to establish any doctrine; such are these following:\r\n\r\nThe Third Book of Esdras, The rest of the Book of Esther,\r\nThe Fourth Book of Esdras, The Book of Wisdom,\r\nThe Book of Tobias, Jesus the Son of Sirach,\r\nThe Book of Judith, Baruch the Prophet,\r\nThe Song of the Three Children, The Prayer of Manasses,\r\nThe Story of Susanna, The First Book of Maccabees,\r\nOf Bel and the Dragon, The Second Book of Maccabees.\r\n\r\nAll the Books of the New Testament, as they are commonly received, we do receive, and account them Canonical.",
     'VII': "Of the Old Testament.\r\nThe Old Testament is not contrary to the New: for both in the Old and New Testament everlasting life is offered to Mankind by Christ, who is the only Mediator between God and Man, being both God and Man. Wherefore they are not to be heard, which feign that the old Fathers did look only for transitory promises. Although the Law given from God by Moses, as touching Ceremonies and Rites, do not bind Christian men, nor the Civil precepts thereof ought of necessity to be received in any commonwealth; yet notwithstanding, no Christian man whatsoever is free from the obedience of the Commandments which are called Moral.",
     'VIII': "Of the Creeds.\r\nThe Nicene Creed, and that which is commonly called the Apostles' Creed, ought thoroughly to be received and believed: for they may be proved by most certain warrants of Holy Scripture.",
@@ -70,8 +71,45 @@ function numberToRoman(num) {
     return Array(+digits.join("") + 1).join("M") + roman_num;
 }
 
+const data = new SlashCommandBuilder()
+      .setName('article')
+      .setDescription('Prints one of the articles.')
+      .addIntegerOption(option =>
+	  option.setName('article_number')
+	      .setDescription('The number of the article to print.')
+	      .setRequired(true)
+	      .setMaxValue(39)
+	      .setMinValue(1));
+
+const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+
+try {
+    rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
+	body: [data.toJSON()]
+    });
+} catch (error) {
+    console.error(error);
+}
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+});
+
+function articleEmbed(articleNumber ,content) {
+    return new EmbedBuilder()
+	.setTitle(`Article ${articleNumber}`)
+	.setDescription(content)
+	.setColor('#0099ff');
+}
+
+client.on(Events.InteractionCreate, async interaction => {
+    if (!interaction.isChatInputCommand()) return;
+
+    if (interaction.commandName === 'article') {
+	const articleNumber = numberToRoman(interaction.options.getInteger("article_number"));
+	const content = articles[articleNumber]
+	await interaction.reply({embeds: [articleEmbed(articleNumber, content)]});
+    }
 });
 
 client.on('messageCreate', message => {
@@ -83,10 +121,7 @@ client.on('messageCreate', message => {
         }
         const content = articles[articleNumber];
         if (content) {
-            const embed = new EmbedBuilder()
-            .setTitle(`Article ${articleNumber}`)
-            .setDescription(content)
-            .setColor('#0099ff');
+            const embed = articleEmbed(articleNumber, content);
             message.channel.send({ embeds: [embed] });
         } else {
           message.channel.send(`Sorry, I couldn't find Article ${articleNumber}.`);
