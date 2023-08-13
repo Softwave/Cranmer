@@ -4,7 +4,7 @@
 // (c) 2023 by Serene Leyba https://twitter.com/serene1662
 
 require('dotenv').config();
-const { Client, GatewayIntentBits, EmbedBuilder  } = require('discord.js');
+const { Client, Events, GatewayIntentBits, EmbedBuilder, REST, Routes, SlashCommandBuilder  } = require('discord.js');
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -12,6 +12,7 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
     ]
 });
+
 const articles = {
     'I': "Of Faith in the Holy Trinity.\r\nThere is but one living and true God, everlasting, without body, parts, or passions; of infinite power, wisdom, and goodness; the Maker, and Preserver of all things both visible and invisible. And in unity of this Godhead there be three Persons, of one substance, power, and eternity; the Father, the Son, and the Holy Ghost.",
     'II': "Of the Word or Son of God, which was made very Man.\r\nThe Son, which is the Word of the Father, begotten from everlasting of the Father, the very and eternal God, and of one substance with the Father, took Man's nature in the womb of the blessed Virgin, of her substance: so that two whole and perfect Natures, that is to say, the Godhead and Manhood, were joined together in one Person, never to be divided, whereof is one Christ, very God, and very Man; who truly suffered, was crucified, dead, and buried, to reconcile his Father to us, and to be a sacrifice, not only for original guilt, but also for actual sins of men",
@@ -70,8 +71,45 @@ function numberToRoman(num) {
     return Array(+digits.join("") + 1).join("M") + roman_num;
 }
 
+const data = new SlashCommandBuilder()
+      .setName('article')
+      .setDescription('Prints one of the articles.')
+      .addIntegerOption(option =>
+	  option.setName('article_number')
+	      .setDescription('The number of the article to print.')
+	      .setRequired(true)
+	      .setMaxValue(39)
+	      .setMinValue(1));
+
+const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+
+try {
+    rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
+	body: [data.toJSON()]
+    });
+} catch (error) {
+    console.error(error);
+}
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
+});
+
+function articleEmbed(articleNumber ,content) {
+    return new EmbedBuilder()
+	.setTitle(`Article ${articleNumber}`)
+	.setDescription(content)
+	.setColor('#0099ff');
+}
+
+client.on(Events.InteractionCreate, async interaction => {
+    if (!interaction.isChatInputCommand()) return;
+
+    if (interaction.commandName === 'article') {
+	const articleNumber = numberToRoman(interaction.options.getInteger("article_number"));
+	const content = articles[articleNumber]
+	await interaction.reply({embeds: [articleEmbed(articleNumber, content)]});
+    }
 });
 
 client.on('messageCreate', message => {
@@ -83,10 +121,7 @@ client.on('messageCreate', message => {
         }
         const content = articles[articleNumber];
         if (content) {
-            const embed = new EmbedBuilder()
-            .setTitle(`Article ${articleNumber}`)
-            .setDescription(content)
-            .setColor('#0099ff');
+            const embed = articleEmbed(articleNumber, content);
             message.channel.send({ embeds: [embed] });
         } else {
           message.channel.send(`Sorry, I couldn't find Article ${articleNumber}.`);
