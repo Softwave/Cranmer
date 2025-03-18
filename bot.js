@@ -1,7 +1,7 @@
 // Cranmer
 // An Anglican Book of Common Prayer bot for Discord
 // MIT License
-// (c) 2023 by Serene Leyba https://twitter.com/serene1662
+// (c) 2023 by Softwave https://s0ftwave.net/
 
 require('dotenv').config();
 const { Client, Events, GatewayIntentBits, EmbedBuilder, REST, Routes, SlashCommandBuilder  } = require('discord.js');
